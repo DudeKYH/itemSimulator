@@ -4,10 +4,12 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// generator : Prisma 클라이언트를 생성하는 방식을 설정
 generator client {
   provider = "prisma-client-js"
 }
 
+// datasource : Prisma ROM이 연결해야 하는 DB의 세부 정보를 지정
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
