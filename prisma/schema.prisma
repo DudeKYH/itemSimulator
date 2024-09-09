@@ -9,6 +9,83 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+
+model Users {
+  userId      Int       @id @default(autoincrement()) @map("userId")
+  name        String    @unique @map("name")                          // 유저의 name은 Unique
+  password    String    @map("password")
+
+  createdAt   DateTime  @default(now()) @map("createdAt")
+  updatedAt   DateTime  @updatedAt @map("updatedAt")
+
+  characters Characters[]
+
+  @@map("Users")
+}
+
+model Characters {
+  characterId Int       @id @default(autoincrement()) @map("characterId")
+  userId      Int       @map("userId") 
+  name        String    @unique @map("name")                           // 캐릭터의 name은 Unique
+  health      Int       @default(500) @map("health") 
+  power       Int       @default(100) @map("power")   
+  money       Int       @default(10000) @map("money") 
+
+  createdAt   DateTime  @default(now()) @map("createdAt")
+  updatedAt   DateTime  @updatedAt @map("updatedAt")
+
+  user        Users     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  inventory   Inventories[]
+  equipment   Equipments[]  
+
+  @@map("Characters")
+}
+
+model Items {
+  itemId      Int       @id @default(autoincrement()) @map("itemId")
+  name        String    @unique @map("name")                            // 아이템의 name은 Unique
+  health      Int       @map("health")
+  power       Int       @map("power") 
+  price       Int       @map("price")
+
+  createdAt   DateTime  @default(now()) @map("createdAt")
+  updatedAt   DateTime  @updatedAt @map("updatedAt")
+
+  inventory   Inventories[]
+  equipment   Equipments[]
+
+  @@map("Items")
+}
+
+model Inventories {
+  inventoryId Int       @id @default(autoincrement()) @map("inventoryId")
+  characterId Int       @map("characterId")
+  itemId      Int       @map("itemId")
+  amount      Int       @map("amount")
+
+  createdAt   DateTime  @default(now()) @map("createdAt")
+  updatedAt   DateTime  @updatedAt @map("updatedAt")
+
+  character   Characters    @relation(fields: [characterId], references: [characterId], onDelete: Cascade)
+  item        Items         @relation(fields: [itemId], references: [itemId], onDelete: Cascade) 
+
+  @@map("Inventories")
+}
+
+model Equipments {
+  equipmentId Int       @id @default(autoincrement()) @map("equipmentId")
+  characterId Int       @map("characterId")
+  itemId      Int       @map("itemId")
+
+  createdAt   DateTime  @default(now()) @map("createdAt")
+  updatedAt   DateTime  @updatedAt @map("updatedAt")
+
+  character   Characters    @relation(fields: [characterId], references: [characterId], onDelete: Cascade)
+  item        Items         @relation(fields: [itemId], references: [itemId], onDelete: Cascade)
+
+  @@map("Equipments")
 }
