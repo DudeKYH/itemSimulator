@@ -2,8 +2,10 @@ import bcrypt from "bcrypt";
 import express from "express";
 import joi from "joi";
 import jwt from "jsonwebtoken";
-import { TestError } from "../errors/TestError.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
+import { BadRequestError } from "../errors/BadRequestError.js";
+import { ConflictError } from "../errors/ConflictError.js";
+import { NotFoundError } from "../errors/NotFoundError.js";
+import authEssentialMiddleware from "../middlewares/auth.essential.middleware.js";
 import { prisma } from "../utils/prisma/index.js";
 
 // express.Rounter() : 모듈식 마운팅 가능한 핸들러를 반환
@@ -47,16 +49,22 @@ router.post("/sign-up", async (req, res, next) => {
       req.body,
     );
 
+    // ID 중복 체크
     const checkUserName = await prisma.users.findFirst({
       where: { name },
     });
 
-    if (checkUserName) throw new TestError("checkUserName");
+    // ID가 이미 존재 => ConflictError
+    if (checkUserName) throw new ConflictError("해당 ID가 이미 존재합니다.");
 
-    if (password !== confirmPassword) throw new Error("Not Equal Password");
+    // password 재확인 불일치 => BadRequestError
+    if (password !== confirmPassword)
+      throw new BadRequestError("비밀번호가 일치하지 않습니다.");
 
+    // password는 bcrypt로 암호화하여 저장한다.
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // 회원가입 정보를 토대로 Users Table에 생성
     const user = await prisma.users.create({
       data: {
         name,
@@ -64,6 +72,7 @@ router.post("/sign-up", async (req, res, next) => {
       },
     });
 
+    // 회원가입 완료 => http status code : 201
     return res.status(201).json({ message: "회원가입에 성공하였습니다." });
   } catch (error) {
     next(error);
@@ -77,29 +86,31 @@ router.post("/sign-in", async (req, res, next) => {
     const user = await prisma.users.findFirst({
       where: { name },
       select: {
+        userId: true,
         name: true,
         password: true,
       },
     });
 
-    if (!user) throw new Error("존재하지 않는 ID 입니다.");
+    if (!user) throw new NotFoundError("해당 ID가 존재하지 않습니다.");
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const checkPaswword = await bcrypt.compare(password, user.password);
 
-    if (hashedPassword === user.password)
-      throw new Error("비밀번호가 일치하지 않습니다.");
+    if (!checkPaswword)
+      throw new BadRequestError("비밀번호가 일치하지 않습니다.");
 
     const accessToken = jwt.sign(
       {
-        userId: user.name,
+        userId: +user.userId,
       },
-      "custom-secret-key",
+      process.env.SECRET_KEY,
       {
         expiresIn: "1h",
       },
     );
 
-    res.header("authorization", `Bearer ${accessToken}`);
+    //res.header("authorization", `Bearer ${accessToken}`);
+    res.cookie("authorization", `Bearer ${accessToken}`);
 
     return res.status(200).json({ message: "로그인에 성공하였습니다." });
   } catch (error) {
@@ -107,13 +118,11 @@ router.post("/sign-in", async (req, res, next) => {
   }
 });
 
-router.get("/users", authMiddleware, async (req, res, next) => {
-  console.log(req.user);
-
-  const { name } = req.user;
+router.get("/users", authEssentialMiddleware, async (req, res, next) => {
+  const { userId } = req.user;
 
   const users = await prisma.users.findFirst({
-    where: { name: name },
+    where: { userId: userId },
     select: {
       userId: true,
       name: true,
