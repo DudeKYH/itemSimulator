@@ -3,7 +3,7 @@ import { prisma } from "../utils/prisma/index.js";
 
 export default async function (req, res, next) {
   try {
-    const authorization = req.cookies.authorization;
+    const authorization = req.headers.authorization;
 
     if (!authorization) {
       console.log(authorization);

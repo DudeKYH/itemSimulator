@@ -8,8 +8,7 @@ import { prisma } from "../utils/prisma/index.js";
 
 export default async function (req, res, next) {
   try {
-    //const { authorization } = req.header;
-    const { authorization } = req.cookies;
+    const authorization = req.headers.authorization;
 
     if (!authorization)
       throw new NotExistAccessTokenError("Access Token이 존재하지 않습니다.");

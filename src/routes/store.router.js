@@ -19,6 +19,7 @@ const itemSchema = joi.array().items(
   }),
 );
 
+// 아이템 구입 API => 인증 필수
 router.post(
   "/store/:characterId",
   authEssentialMiddleware,
@@ -28,6 +29,7 @@ router.post(
       const { characterId } = await characterIdSchema.validateAsync(req.params);
       const purchaseItemArr = await itemSchema.validateAsync(req.body);
 
+      // 요청한 캐릭터ID로 캐릭터 조회
       let character = await prisma.characters.findFirst({
         where: { characterId },
         select: {
@@ -42,6 +44,7 @@ router.post(
         },
       });
 
+      // 캐릭터 검증
       if (!character) throw new NotFoundError("캐릭터 조회에 실패하였습니다.");
 
       if (character.userId !== userId)
@@ -49,6 +52,8 @@ router.post(
 
       let totalPrice = 0;
 
+      // 구입할 아이템들에 대한 요청이 올바른지 먼저 검증한다.
+      // 추가로 총 아이템 가격을 구한다.
       for (const purchaseItem of purchaseItemArr) {
         const itemCode = purchaseItem.itemCode;
         const itemCount = purchaseItem.itemCount;
@@ -63,14 +68,17 @@ router.post(
         totalPrice += itemCount * item.price;
       }
 
+      // 캐릭터의 Money가 총 구매 가격보다 낮다면 구매 불가
       if (character.money < totalPrice)
         throw new BadRequestError("캐릭터의 Money가 부족합니다.");
 
+      // 이제 구매할 각각의 아이템들을 캐릭터 인벤토리에 넣어준다.
       for (const purchaseItem of purchaseItemArr) {
         const findInventory = character.inventories.find((inventory) => {
           return inventory.itemId === purchaseItem.itemCode;
         });
 
+        // 만약 구매할 아이템이 캐릭터 인벤토리에 없다면 새로 생성한다.
         if (!findInventory) {
           await prisma.inventories.create({
             data: {
@@ -79,7 +87,8 @@ router.post(
               amount: purchaseItem.itemCount,
             },
           });
-        } else {
+        } // 만약 구매할 아이템이 이미 인벤토리에 있다면 구매 개수만큼 증가시켜준다.
+        else {
           await prisma.inventories.update({
             where: {
               inventoryId: findInventory.inventoryId,
@@ -91,6 +100,7 @@ router.post(
         }
       }
 
+      // 캐릭터의 보유 머니를 구매한 총 가격만큼 감소시킨다.
       character = await prisma.characters.update({
         where: { characterId },
         data: {
@@ -108,6 +118,7 @@ router.post(
   },
 );
 
+// 아이템 판매 API => 인증 필수
 router.delete(
   "/store/:characterId",
   authEssentialMiddleware,

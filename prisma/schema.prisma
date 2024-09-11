@@ -55,10 +55,11 @@ model Items {
 model Inventories {
   inventoryId Int        @id @default(autoincrement()) @map("inventoryId")
   characterId Int        @map("characterId")
-  createdAt   DateTime   @default(now()) @map("createdAt")
-  updatedAt   DateTime   @updatedAt @map("updatedAt")
   amount      Int        @map("amount")
   itemId      Int        @map("itemId")
+  createdAt   DateTime   @default(now()) @map("createdAt")
+  updatedAt   DateTime   @updatedAt @map("updatedAt")
+
 
   characters   Characters @relation(fields: [characterId], references: [characterId], onDelete: Cascade)
   items        Items      @relation(fields: [itemId], references: [itemId], onDelete: Cascade)

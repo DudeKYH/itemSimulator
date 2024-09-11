@@ -11,6 +11,7 @@ const characterIdSchema = joi.object({
   characterId: joi.number().positive().integer().required(),
 });
 
+// 인벤토리 목록 조회 API
 router.get(
   "/inventories/:characterId",
   authEssentialMiddleware,
@@ -19,6 +20,8 @@ router.get(
       const { userId } = req.user;
       const { characterId } = await characterIdSchema.validateAsync(req.params);
 
+      // characterId인 캐릭터를 조회한다.
+      // 이 때, 캐릭터의 Inventory도 같이 조회
       const character = await prisma.characters.findFirst({
         where: { characterId },
         select: {
@@ -45,6 +48,8 @@ router.get(
       if (character.userId !== userId)
         throw new ForbiddenError("보유한 캐릭터가 아닙니다.");
 
+      // Response 형식을 인벤토리 아이템에 대한 { 아이템ID, 아이템NAME, 아이템보유량}으로 하고 싶어
+      // Array.map()을 사용하였다.
       const data = character.inventories.map((inventory) => {
         return {
           itemCode: inventory.itemId,

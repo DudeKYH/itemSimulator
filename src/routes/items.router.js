@@ -29,6 +29,7 @@ const itemModifySchema = joi.object({
   }),
 });
 
+// 아이템 생성 API
 router.post("/items", async (req, res, next) => {
   try {
     const { itemName, itemStat, itemPrice } = await itemSchema.validateAsync(
@@ -61,6 +62,7 @@ router.post("/items", async (req, res, next) => {
   }
 });
 
+// 아이템 목록 조회 API
 router.get("/items", async (req, res, next) => {
   try {
     const items = await prisma.items.findMany({
@@ -77,6 +79,7 @@ router.get("/items", async (req, res, next) => {
   }
 });
 
+// 아이템 상세 조회 API
 router.get("/items/:itemCode", async (req, res, next) => {
   try {
     const { itemCode } = await itemCodeSchema.validateAsync(req.params);
@@ -100,6 +103,7 @@ router.get("/items/:itemCode", async (req, res, next) => {
   }
 });
 
+// 아이템 수정 API
 router.patch("/items/:itemCode", async (req, res, next) => {
   try {
     const { itemCode } = await itemCodeSchema.validateAsync(req.params);
@@ -107,7 +111,13 @@ router.patch("/items/:itemCode", async (req, res, next) => {
       req.body,
     );
 
-    const item = await prisma.items.update({
+    let item = await prisma.items.findFirst({
+      where: { itemId: itemCode },
+    });
+
+    if (!item) throw new NotFoundError("아이템 조회에 실패하였습니다.");
+
+    item = await prisma.items.update({
       where: { itemId: itemCode },
       data: {
         name: itemName,
@@ -115,8 +125,6 @@ router.patch("/items/:itemCode", async (req, res, next) => {
         power: itemStat?.power,
       },
     });
-
-    if (!item) throw new NotFoundError("아이템 조회에 실패하였습니다.");
 
     return res
       .status(200)

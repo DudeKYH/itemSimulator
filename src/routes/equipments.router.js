@@ -16,6 +16,7 @@ const itemSchema = joi.object({
   itemCode: joi.number().positive().integer().required(),
 });
 
+// CharacterId의 캐릭터 장비창을 조회하는 API
 router.get("/equipments/:characterId", async (req, res, next) => {
   try {
     const { characterId } = await characterIdSchema.validateAsync(req.params);
@@ -130,8 +131,8 @@ router.post(
         return inventory.itemId === itemCode;
       });
 
-      // 1개 이상이라면 아이템 수량을 1개 감소
-      if (findInventory.amount >= 1) {
+      // 2개 이상이라면 아이템 수량을 1개 감소
+      if (findInventory.amount > 1) {
         await prisma.inventories.update({
           where: { inventoryId: findInventory.inventoryId },
           data: {
@@ -146,7 +147,9 @@ router.post(
         });
       }
 
-      return res.status(201).json(`${item.name} 아이템을 장착하였습니다.`);
+      return res
+        .status(201)
+        .json({ message: `${item.name} 아이템을 장착하였습니다.` });
     } catch (error) {
       next(error);
     }
@@ -227,7 +230,7 @@ router.delete(
         await prisma.inventories.update({
           where: { inventoryId: findInventory.inventoryId },
           data: {
-            amount: { decrement: 1 },
+            amount: { increment: 1 },
           },
         });
       }
@@ -242,7 +245,9 @@ router.delete(
         });
       }
 
-      return res.status(200).json(`${item.name} 아이템을 탈착하였습니다.`);
+      return res
+        .status(200)
+        .json({ message: `${item.name} 아이템을 탈착하였습니다.` });
     } catch (error) {
       next(error);
     }

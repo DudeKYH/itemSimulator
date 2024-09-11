@@ -41,9 +41,8 @@ const userSchema = joi.object({
   confirmPassword: joi.string().min(6).max(30).required(),
 });
 
-// 1. 회원 가입 API
-
-router.post("/sign-up", async (req, res, next) => {
+// 회원 가입 API
+router.post("/signUp", async (req, res, next) => {
   try {
     const { name, password, confirmPassword } = await userSchema.validateAsync(
       req.body,
@@ -72,17 +71,25 @@ router.post("/sign-up", async (req, res, next) => {
       },
     });
 
+    delete user.password;
+
     // 회원가입 완료 => http status code : 201
-    return res.status(201).json({ message: "회원가입에 성공하였습니다." });
+    return res
+      .status(201)
+      .json({ message: "회원가입에 성공하였습니다.", data: user });
   } catch (error) {
     next(error);
   }
 });
 
-router.post("/sign-in", async (req, res, next) => {
+// 로그인 API => JWT 발급을 해준다.
+// 그리고 클라이언트는 매번 인증 처리 미들 웨어를 통과하기 위해
+// 매번 요청 시 JWT를 Request의 Header의 Authorization에 담아야 한다.
+router.post("/signIn", async (req, res, next) => {
   try {
     const { name, password } = req.body;
 
+    // 입력받은 Name, Password로 유저가 존재하는지 찾는다.
     const user = await prisma.users.findFirst({
       where: { name },
       select: {
@@ -94,23 +101,26 @@ router.post("/sign-in", async (req, res, next) => {
 
     if (!user) throw new NotFoundError("해당 ID가 존재하지 않습니다.");
 
+    // 회원가입할 때의 비밀번호 정보와 입력받은 비밀번호가 같은지 검증한다.
     const checkPaswword = await bcrypt.compare(password, user.password);
 
     if (!checkPaswword)
       throw new BadRequestError("비밀번호가 일치하지 않습니다.");
 
+    // 로그인 정보가 일치한다면, Access Token으로 JsonWebToken을 생성한다.
+    // Option으로 expiresIn: "1d" 와 같이 토큰의 만료 기간을 지정할 수 있다.
     const accessToken = jwt.sign(
       {
         userId: +user.userId,
       },
       process.env.SECRET_KEY,
       {
-        expiresIn: "1h",
+        expiresIn: "1d",
       },
     );
 
-    //res.header("authorization", `Bearer ${accessToken}`);
-    res.cookie("authorization", `Bearer ${accessToken}`);
+    // 생성된 jwt 토큰을 Header의 authorization 필드에 담는다.
+    res.header("authorization", `Bearer ${accessToken}`);
 
     return res.status(200).json({ message: "로그인에 성공하였습니다." });
   } catch (error) {
@@ -118,6 +128,8 @@ router.post("/sign-in", async (req, res, next) => {
   }
 });
 
+// 유저 정보 조회 API
+// 로그인한 유저에 대해서만 자신의 정보를 응답해준다.
 router.get("/users", authEssentialMiddleware, async (req, res, next) => {
   const { userId } = req.user;
 
