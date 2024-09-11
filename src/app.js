@@ -13,7 +13,7 @@ import UserRouter from "./routes/users.router.js";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.SERVER_PORT;
+const PORT = process.env.SERVER_PORT ? 3010 : process.env.SERVER_PORT;
 
 app.use(express.json());
 app.use(cookieParser());
