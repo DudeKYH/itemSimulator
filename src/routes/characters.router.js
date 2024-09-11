@@ -55,8 +55,6 @@ router.delete(
       const { userId } = req.user;
       const { characterId } = await characterIdSchema.validateAsync(req.params);
 
-      console.log(userId, characterId);
-
       const character = await prisma.characters.findFirst({
         where: { characterId },
       });
