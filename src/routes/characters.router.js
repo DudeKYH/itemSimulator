@@ -77,6 +77,7 @@ router.delete(
   },
 );
 
+// 캐릭터 상세조회 API
 router.get(
   "/characters/:characterId",
   authInessentialMiddleware,
@@ -101,7 +102,7 @@ router.get(
       }
 
       // 로그인한 유저의 캐릭터가 아니라면 money는 보여주면 안된다.
-      if (character.userId !== userId) {
+      if (character.userId !== userId || userId === undefined) {
         delete character.money;
       }
       delete character.userId;
