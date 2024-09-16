@@ -27,9 +27,6 @@ router.get(
         select: {
           userId: true,
           inventories: {
-            where: {
-              characterId,
-            },
             select: {
               itemId: true,
               amount: true,

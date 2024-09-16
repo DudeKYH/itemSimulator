@@ -138,7 +138,6 @@ router.get("/users", authEssentialMiddleware, async (req, res, next) => {
     select: {
       userId: true,
       name: true,
-      password: true,
       createdAt: true,
       updatedAt: true,
     },

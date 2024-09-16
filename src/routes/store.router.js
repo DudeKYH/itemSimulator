@@ -36,11 +36,7 @@ router.post(
           characterId: true,
           userId: true,
           money: true,
-          inventories: {
-            where: {
-              characterId,
-            },
-          },
+          inventories: true,
         },
       });
 
@@ -134,11 +130,7 @@ router.delete(
           characterId: true,
           userId: true,
           money: true,
-          inventories: {
-            where: {
-              characterId,
-            },
-          },
+          inventories: true,
         },
       });
 
@@ -154,8 +146,6 @@ router.delete(
 
         // 인벤토리에서 판매할 아이템 Code와 일치하고 판매할 수량만큼 갖고 있는지 검증한다..
         const findInventory = character.inventories.find((inventory) => {
-          console.log(inventory.amount, inventory.itemId);
-          console.log(sellItemCount, sellItemCode);
           return (
             inventory.amount >= sellItemCount &&
             inventory.itemId === sellItemCode
@@ -186,7 +176,6 @@ router.delete(
         const sellItemPrice = sellItem.price;
 
         const findInventory = character.inventories.find((inventory) => {
-          console.log(inventory.itemId, sellItemCode);
           return inventory.itemId === sellItemCode;
         });
 

@@ -6,7 +6,6 @@ export default async function (req, res, next) {
     const authorization = req.headers.authorization;
 
     if (!authorization) {
-      console.log(authorization);
       throw new Error();
     }
 
@@ -32,7 +31,6 @@ export default async function (req, res, next) {
 
     next();
   } catch (error) {
-    console.log(error);
     next();
   }
 }

@@ -26,7 +26,6 @@ router.get("/equipments/:characterId", async (req, res, next) => {
       select: {
         userId: true,
         equipments: {
-          where: { characterId },
           select: {
             itemId: true,
             items: {
@@ -68,12 +67,8 @@ router.post(
         select: {
           characterId: true,
           userId: true,
-          inventories: {
-            where: { characterId },
-          },
-          equipments: {
-            where: { characterId },
-          },
+          inventories: true,
+          equipments: true,
         },
       });
 
@@ -172,12 +167,8 @@ router.delete(
         select: {
           characterId: true,
           userId: true,
-          inventories: {
-            where: { characterId },
-          },
-          equipments: {
-            where: { characterId },
-          },
+          inventories: true,
+          equipments: true,
         },
       });
 

@@ -117,13 +117,16 @@ router.patch("/items/:itemCode", async (req, res, next) => {
 
     if (!item) throw new NotFoundError("아이템 조회에 실패하였습니다.");
 
+    const data = {};
+    if (itemName) data.name = itemName;
+    if (itemStat) {
+      if (itemStat.health) data.health = itemStat.health;
+      if (itemStat.power) data.power = itemStat.power;
+    }
+
     item = await prisma.items.update({
       where: { itemId: itemCode },
-      data: {
-        name: itemName,
-        health: itemStat?.health,
-        power: itemStat?.power,
-      },
+      data: data,
     });
 
     return res
